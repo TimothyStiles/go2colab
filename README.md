@@ -28,5 +28,7 @@ Given a `Go` package repo url `go2colab` will:
   - [ ] If flag - Update godocs with the tutorial's url
 
 ### What this is not (unless y'all start throwing money at my [github sponsors](https://github.com/sponsors/TimothyStiles/)).
+
+- This does not convert colab notebooks to Go example tests
 - This is not a doc hosting solution
 - This is not a product
