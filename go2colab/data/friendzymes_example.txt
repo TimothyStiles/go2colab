@@ -1,0 +1,752 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "name": "Friendzymes Feature - Long Repetitive Sequences.ipynb",
+      "provenance": [],
+      "collapsed_sections": [
+        "PZJDiu_W3_FT",
+        "uuiRVpPZ4yIT",
+        "PZV2ZHY2V4d7",
+        "-Kdn0G_wWM3E"
+      ]
+    },
+    "kernelspec": {
+      "display_name": "Go",
+      "name": "gophernotes"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "dW2UGT4s32-x"
+      },
+      "source": [
+        "# **Feature - Remove Long Repetitive Sequences**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PZJDiu_W3_FT"
+      },
+      "source": [
+        "# Configurations for Colab Notebooks\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Xqjf_sf0Am-X"
+      },
+      "source": [
+        "\n",
+        "Colab notebooks uses python kernels to run each cell. However, because ***Poly*** is written in **Go language**, we need to install and configure some things in colab to make feasible not only to run golang but also ***Poly***."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "caT1iMfshw62",
+        "outputId": "b72c9d00-0678-4fcc-bd58-02799a99d317"
+      },
+      "source": [
+        "# run this cell first time using python runtime\n",
+        "!add-apt-repository ppa:longsleep/golang-backports -y\n",
+        "!apt update\n",
+        "!apt install golang-go\n",
+        "%env GOPATH=/root/go\n",
+        "!go get -u github.com/gopherdata/gophernotes\n",
+        "!cp ~/go/bin/gophernotes /usr/bin/\n",
+        "!npx degit gopherdata/gophernotes/kernel \\\n",
+        "     /usr/local/share/jupyter/kernels/gophernotes\n",
+        "!rm -rf $GOPATH/pkg/mod/github.com/!open-!science-!global\n",
+        "!rm -rf $GOPATH/pkg/mod/cache/download/github.com/!open-!science-!global\n",
+        "!go get -u github.com/Open-Science-Global/poly@e3e1c61\n",
+        "!wget https://raw.githubusercontent.com/Open-Science-Global/poly/prime/data/puc19.gbk \\\n",
+        "  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/009/045/GCF_000009045.1_ASM904v1/GCF_000009045.1_ASM904v1_genomic.gbff.gz\n",
+        "!gzip -d GCF_000009045.1_ASM904v1_genomic.gbff.gz\n",
+        "!mv GCF_000009045.1_ASM904v1_genomic.gbff subtilis_genome.gbff  "
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Get:1 http://security.ubuntu.com/ubuntu bionic-security InRelease [88.7 kB]\n",
+            "Ign:2 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64  InRelease\n",
+            "Get:3 http://ppa.launchpad.net/c2d4u.team/c2d4u4.0+/ubuntu bionic InRelease [15.9 kB]\n",
+            "Ign:4 https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64  InRelease\n",
+            "Get:5 https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/ InRelease [3,626 B]\n",
+            "Hit:6 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64  Release\n",
+            "Hit:7 https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64  Release\n",
+            "Hit:8 http://archive.ubuntu.com/ubuntu bionic InRelease\n",
+            "Get:9 http://archive.ubuntu.com/ubuntu bionic-updates InRelease [88.7 kB]\n",
+            "Hit:10 http://ppa.launchpad.net/cran/libgit2/ubuntu bionic InRelease\n",
+            "Get:11 http://security.ubuntu.com/ubuntu bionic-security/restricted amd64 Packages [614 kB]\n",
+            "Hit:12 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic InRelease\n",
+            "Get:13 http://security.ubuntu.com/ubuntu bionic-security/main amd64 Packages [2,372 kB]\n",
+            "Get:14 http://archive.ubuntu.com/ubuntu bionic-backports InRelease [74.6 kB]\n",
+            "Get:15 http://security.ubuntu.com/ubuntu bionic-security/universe amd64 Packages [1,433 kB]\n",
+            "Hit:16 http://ppa.launchpad.net/graphics-drivers/ppa/ubuntu bionic InRelease\n",
+            "Get:17 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic InRelease [15.4 kB]\n",
+            "Get:18 https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/ Packages [69.5 kB]\n",
+            "Get:21 http://ppa.launchpad.net/c2d4u.team/c2d4u4.0+/ubuntu bionic/main Sources [1,809 kB]\n",
+            "Get:22 http://ppa.launchpad.net/c2d4u.team/c2d4u4.0+/ubuntu bionic/main amd64 Packages [923 kB]\n",
+            "Get:23 http://archive.ubuntu.com/ubuntu bionic-updates/restricted amd64 Packages [658 kB]\n",
+            "Get:24 http://archive.ubuntu.com/ubuntu bionic-updates/main amd64 Packages [2,821 kB]\n",
+            "Get:25 http://archive.ubuntu.com/ubuntu bionic-updates/universe amd64 Packages [2,213 kB]\n",
+            "Get:26 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic/main amd64 Packages [6,639 B]\n",
+            "Fetched 13.2 MB in 5s (2,851 kB/s)\n",
+            "Reading package lists... Done\n",
+            "Hit:1 http://security.ubuntu.com/ubuntu bionic-security InRelease\n",
+            "Hit:2 https://cloud.r-project.org/bin/linux/ubuntu bionic-cran40/ InRelease\n",
+            "Ign:3 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64  InRelease\n",
+            "Hit:4 http://ppa.launchpad.net/c2d4u.team/c2d4u4.0+/ubuntu bionic InRelease\n",
+            "Hit:5 http://archive.ubuntu.com/ubuntu bionic InRelease\n",
+            "Ign:6 https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64  InRelease\n",
+            "Hit:7 https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64  Release\n",
+            "Hit:8 https://developer.download.nvidia.com/compute/machine-learning/repos/ubuntu1804/x86_64  Release\n",
+            "Hit:9 http://archive.ubuntu.com/ubuntu bionic-updates InRelease\n",
+            "Hit:10 http://ppa.launchpad.net/cran/libgit2/ubuntu bionic InRelease\n",
+            "Hit:11 http://archive.ubuntu.com/ubuntu bionic-backports InRelease\n",
+            "Hit:12 http://ppa.launchpad.net/deadsnakes/ppa/ubuntu bionic InRelease\n",
+            "Hit:13 http://ppa.launchpad.net/graphics-drivers/ppa/ubuntu bionic InRelease\n",
+            "Hit:14 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic InRelease\n",
+            "Reading package lists... Done\n",
+            "Building dependency tree       \n",
+            "Reading state information... Done\n",
+            "59 packages can be upgraded. Run 'apt list --upgradable' to see them.\n",
+            "Reading package lists... Done\n",
+            "Building dependency tree       \n",
+            "Reading state information... Done\n",
+            "The following additional packages will be installed:\n",
+            "  golang-1.17-go golang-1.17-src golang-src\n",
+            "Suggested packages:\n",
+            "  bzr | brz mercurial subversion\n",
+            "The following NEW packages will be installed:\n",
+            "  golang-1.17-go golang-1.17-src golang-go golang-src\n",
+            "0 upgraded, 4 newly installed, 0 to remove and 59 not upgraded.\n",
+            "Need to get 71.8 MB of archives.\n",
+            "After this operation, 423 MB of additional disk space will be used.\n",
+            "Get:1 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic/main amd64 golang-1.17-src all 1.17.2-1longsleep1+focal [15.2 MB]\n",
+            "Get:2 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic/main amd64 golang-1.17-go amd64 1.17.2-1longsleep1+focal [56.6 MB]\n",
+            "Get:3 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic/main amd64 golang-src amd64 2:1.17~1longsleep1 [5,056 B]\n",
+            "Get:4 http://ppa.launchpad.net/longsleep/golang-backports/ubuntu bionic/main amd64 golang-go amd64 2:1.17~1longsleep1 [24.1 kB]\n",
+            "Fetched 71.8 MB in 4s (16.3 MB/s)\n",
+            "Selecting previously unselected package golang-1.17-src.\n",
+            "(Reading database ... 155047 files and directories currently installed.)\n",
+            "Preparing to unpack .../golang-1.17-src_1.17.2-1longsleep1+focal_all.deb ...\n",
+            "Unpacking golang-1.17-src (1.17.2-1longsleep1+focal) ...\n",
+            "Selecting previously unselected package golang-1.17-go.\n",
+            "Preparing to unpack .../golang-1.17-go_1.17.2-1longsleep1+focal_amd64.deb ...\n",
+            "Unpacking golang-1.17-go (1.17.2-1longsleep1+focal) ...\n",
+            "Selecting previously unselected package golang-src:amd64.\n",
+            "Preparing to unpack .../golang-src_2%3a1.17~1longsleep1_amd64.deb ...\n",
+            "Unpacking golang-src:amd64 (2:1.17~1longsleep1) ...\n",
+            "Selecting previously unselected package golang-go.\n",
+            "Preparing to unpack .../golang-go_2%3a1.17~1longsleep1_amd64.deb ...\n",
+            "Unpacking golang-go (2:1.17~1longsleep1) ...\n",
+            "Setting up golang-1.17-src (1.17.2-1longsleep1+focal) ...\n",
+            "Setting up golang-src:amd64 (2:1.17~1longsleep1) ...\n",
+            "Setting up golang-1.17-go (1.17.2-1longsleep1+focal) ...\n",
+            "Setting up golang-go (2:1.17~1longsleep1) ...\n",
+            "Processing triggers for man-db (2.8.3-2ubuntu0.1) ...\n",
+            "env: GOPATH=/root/go\n",
+            "go: downloading github.com/gopherdata/gophernotes v0.7.3\n",
+            "go: downloading github.com/cosmos72/gomacro v0.0.0-20210624153544-b4935e406a41\n",
+            "go: downloading github.com/go-zeromq/zmq4 v0.13.0\n",
+            "go: downloading github.com/gofrs/uuid v4.0.0+incompatible\n",
+            "go: downloading golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1\n",
+            "go: downloading github.com/gofrs/uuid v4.1.0+incompatible\n",
+            "go: downloading github.com/peterh/liner v1.2.1\n",
+            "go: downloading github.com/go-zeromq/goczmq/v4 v4.2.2\n",
+            "go: downloading golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9\n",
+            "go: downloading golang.org/x/sync v0.0.0-20210220032951-036812b2e83c\n",
+            "go: downloading golang.org/x/tools v0.1.0\n",
+            "go: downloading github.com/go-zeromq/goczmq v4.1.0+incompatible\n",
+            "go: downloading github.com/mattn/go-runewidth v0.0.12\n",
+            "go: downloading github.com/mattn/go-runewidth v0.0.13\n",
+            "go: downloading golang.org/x/tools v0.1.7\n",
+            "go: downloading github.com/rivo/uniseg v0.1.0\n",
+            "go: downloading golang.org/x/sys v0.0.0-20210119212857-b64e53b001e4\n",
+            "go: downloading github.com/rivo/uniseg v0.2.0\n",
+            "go: downloading golang.org/x/mod v0.3.0\n",
+            "go: downloading golang.org/x/mod v0.5.1\n",
+            "go: downloading golang.org/x/sys v0.0.0-20211015200801-69063c4bb744\n",
+            "go get: installing executables with 'go get' in module mode is deprecated.\n",
+            "\tUse 'go install pkg@version' instead.\n",
+            "\tFor more information, see https://golang.org/doc/go-get-install-deprecation\n",
+            "\tor run 'go help get' or 'go help install'.\n",
+            "\u001b[K\u001b[?25hnpx: installed 1 in 2.561s\n",
+            "\u001b[36m> cloned \u001b[1mgopherdata/gophernotes\u001b[22m#\u001b[1mHEAD\u001b[22m to /usr/local/share/jupyter/kernels/gophernotes\u001b[39m\n",
+            "go: downloading github.com/Open-Science-Global/poly v0.11.3\n",
+            "--2021-10-19 17:31:34--  https://raw.githubusercontent.com/Open-Science-Global/poly/prime/data/puc19.gbk\n",
+            "Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...\n",
+            "Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.\n",
+            "HTTP request sent, awaiting response... 200 OK\n",
+            "Length: 8356 (8.2K) [text/plain]\n",
+            "Saving to: ‘puc19.gbk’\n",
+            "\n",
+            "puc19.gbk           100%[===================>]   8.16K  --.-KB/s    in 0s      \n",
+            "\n",
+            "2021-10-19 17:31:34 (79.2 MB/s) - ‘puc19.gbk’ saved [8356/8356]\n",
+            "\n",
+            "--2021-10-19 17:31:34--  https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/009/045/GCF_000009045.1_ASM904v1/GCF_000009045.1_ASM904v1_genomic.gbff.gz\n",
+            "Resolving ftp.ncbi.nlm.nih.gov (ftp.ncbi.nlm.nih.gov)... 130.14.250.12, 130.14.250.10, 2607:f220:41e:250::7, ...\n",
+            "Connecting to ftp.ncbi.nlm.nih.gov (ftp.ncbi.nlm.nih.gov)|130.14.250.12|:443... connected.\n",
+            "HTTP request sent, awaiting response... 200 OK\n",
+            "Length: 3391528 (3.2M) [application/x-gzip]\n",
+            "Saving to: ‘GCF_000009045.1_ASM904v1_genomic.gbff.gz’\n",
+            "\n",
+            "GCF_000009045.1_ASM 100%[===================>]   3.23M  --.-KB/s    in 0.1s    \n",
+            "\n",
+            "2021-10-19 17:31:35 (25.9 MB/s) - ‘GCF_000009045.1_ASM904v1_genomic.gbff.gz’ saved [3391528/3391528]\n",
+            "\n",
+            "FINISHED --2021-10-19 17:31:35--\n",
+            "Total wall clock time: 0.4s\n",
+            "Downloaded: 2 files, 3.2M in 0.1s (26.0 MB/s)\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "GbPLWTJ05uH4"
+      },
+      "source": [
+        "**After running this step change runtime type to Go.**\n",
+        "\n",
+        "This will make Colab starting use a open source go kernel called Gopher Notes."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "uuiRVpPZ4yIT"
+      },
+      "source": [
+        "# Understand the problem"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "IJPTaICB7hMv"
+      },
+      "source": [
+        "A interesting topic about CDS optimization is why is so important.\n",
+        "\n",
+        "> Different codons that encode the same amino acid are known as synonymous codons. **[Source](https://www.dovepress.com/synonymous-codons-influencing-gene-expression-in-organisms-peer-reviewed-fulltext-article-RRBC)**\n",
+        "\n",
+        "CDS is a part of our genetic design where we could change the DNA sequence without being worried about changing a function. So you could make synonymous codon changes and remove things like enzyme restriction sites, harpins and **LONG REPETITIVE SEQUENCES** without being worried about it. We could see this as a opportuny to make our design better.\n",
+        "\n",
+        "*Observation: I'm not saying that this changes couldn't have some impact in other things like translation rates. However, if you only use synonymous codons to change things in the CDS part the final result will still be you desired protein.*\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "AEYn8YC65WIA"
+      },
+      "source": [
+        "**Why Long Repetitive Sequences are a problem in organism engineering?**\n",
+        "\n",
+        "> \"Repetitive DNA confounds synthetic biology’s design–build– test–learn cycle by creating undesired products during DNA fragment synthesis and assembly, triggering homologous recombination and creating genetic instability, and preventing the correct alignment of next-generation sequencing (NGS) reads, thereby reducing our ability to troubleshoot genetic system function. The longest repetitive sequence is a key determinant of a genetic system’s stability, called the maximum shared repeat length (Lmax). A 21-bp repetitive sequence is sufficient to trigger homologous recombination in E. coli, which can excise the DNA in between the two parts and break the system function. In other organisms (for example, Saccharomyces cerevisiae, Bacillus subtilis and mammalian viral vectors), a 12- to 18-bp repeat is long enough for strand invasion and homologous recombination. DNA assembly is also sensitive to repetitive sequences: a 20-bp repeat lowers the first-pass success rate to 40% whereas DNA fragments with a 11-bp repeat can be readily synthesized. Overall, if a toolbox of genetic parts has a low Lmax of 10 bp, then all of the parts can be used to build genetic systems without introducing DNA repeats over 10 bp long.\" **Hossain A., Lopez E., Halper S.M., Cetnar D.P., Reis A.C., Strickland D., Klavins E., and Salis H.M. Automated design of thousands of nonrepetitive parts for engineering stable genetic systems - Nature Biotechnology, doi:10.1038/s41587-020-0584-2**\n",
+        "\n",
+        "\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "AOri3P2JgUAj"
+      },
+      "source": [
+        "**How people find repetitive sequences?**\n",
+        "\n",
+        "The first thing to understand is what is a k-mer. k-mers are substrings of length k contained within a biological sequence. So if for example we have this sequence.\n",
+        "```\n",
+        "ATCGAATCGGATCGGTATGCATCGAT\n",
+        "```\n",
+        "If I divide this sequence by 3-mers we should look for something like\n",
+        "\n",
+        "\n",
+        "```\n",
+        "Sequence     ATCGAATCGGATCGGTATGCATCGAT\n",
+        "3-mers       ATC\n",
+        "              TCG\n",
+        "               CGA\n",
+        "                GAA\n",
+        "                 ...   *until*   ...\n",
+        "                                   CGA\n",
+        "                                    GAT\n",
+        "```\n",
+        "\n",
+        "With a list of k-mers of some sequence you could use this information to find a target sequence with the same size.\n",
+        "\n",
+        "```\n",
+        "Target Sequence (8-mer)   CGAATCGG\n",
+        "Sequence                  ATCGAATCGGATCGGTATGCATCGAT\n",
+        "Searching repeats         CGAATCGG - wrong\n",
+        "                           CGAATCGG - wrong\n",
+        "                            CGAATCGG - perfect match!\n",
+        "```\n",
+        "\n",
+        "So with a list of k-mers of the target sequence and the search sequence we could found **repetitive** k-mers.\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "mHKfIc8K-v9S"
+      },
+      "source": [
+        "\n",
+        "\n",
+        "Looking in the Poly source code we could see that the **[synthesis subpackage](https://github.com/Open-Science-Global/poly/blob/prime/synthesis/synthesis.go)** already have a function called **[RemoveRepeat](https://github.com/Open-Science-Global/poly/blob/fe168c5d46f5835d95a4e16d322bb936b533fd02/synthesis/synthesis.go#L93)** to actually remove Long Repetitive Sequences.\n",
+        "\n",
+        "\n",
+        "\n",
+        "```\n",
+        "// You could also take a look in source code by clicking in the RemoveRepeat word above\n",
+        "// RemoveRepeat is a generator to make a problematicSequenceFunc for repeats.\n",
+        "func RemoveRepeat(repeatLen int) func(string, chan DnaSuggestion, *sync.WaitGroup) {\n",
+        "\treturn func(sequence string, c chan DnaSuggestion, wg *sync.WaitGroup) {\n",
+        "\t\t// Get a kmer list\n",
+        "\t\tkmers := make(map[string]bool)\n",
+        "\t\tfor i := 0; i < len(sequence)-repeatLen; i++ {\n",
+        "\t\t\t_, alreadyFound := kmers[sequence[i:i+repeatLen]]\n",
+        "\t\t\tif alreadyFound {\n",
+        "\t\t\t\tposition := i / 3\n",
+        "\t\t\t\tleftover := i % 3\n",
+        "\t\t\t\tswitch {\n",
+        "\t\t\t\tcase leftover == 0:\n",
+        "\t\t\t\t\tc <- DnaSuggestion{position, ((i + repeatLen) / 3), \"NA\", 1, \"Remove repeat\", 0, 0}\n",
+        "\t\t\t\tcase leftover != 0:\n",
+        "\t\t\t\t\tc <- DnaSuggestion{position, ((i + repeatLen) / 3) - 1, \"NA\", 1, \"Remove repeat\", 0, 0}\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t\tkmers[sequence[i:i+repeatLen]] = true\n",
+        "\t\t}\n",
+        "\t\twg.Done()\n",
+        "\t}\n",
+        "}\n",
+        "```\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "baihznPeAxX9"
+      },
+      "source": [
+        "The function receives an integer of the maximum shared repeat length (Lmax) and iterates through CDS, seeing if have a repetition of this length inside the sequence. We now know that 12 to 18bp repetition is enough for strain invasion and homologous recombination.\n",
+        "\n",
+        "> \"One of the problems encountered in cloning experiments in Escherichia coli and Bacillus subtilis is structural plasmid instability. In most cases this is manifested by the occurrence of deletions. The generation of deletions in recombinant plasmids has been shown to be associated with the presence of several kinds of DNA sequences. Short, directly repeated sequences (18 bp) have frequently been found to be involved in the generation of deletions, both in E. coli and in B. subtilis.\" **Peeters, B.P.H., de Boer, J.H., Bron, S. et al. Structural plasmid instability in Bacillus subtilis: Effect of direct and inverted repeats. Mol Gen Genet 212, 450–458 (1988). https://doi.org/10.1007/BF00330849**\n",
+        "\n",
+        "\n",
+        "Well this repeated sequences referenced above are related to repetitions in a less local perspective, so actually repetitions found between our CDS and the organism genome. So we will **make a new function found long repetitive sequences in our CDS that could be founded in Bacillus subtilis genome.**"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "oP84b_bA-sAa"
+      },
+      "source": [
+        "# Implementation"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "PZV2ZHY2V4d7"
+      },
+      "source": [
+        "## Import of libraries and functions for support development"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "Flwx3HOpQVtF",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 134
+        },
+        "outputId": "e6e0e549-8661-4018-dcd1-d8d86ce96841"
+      },
+      "source": [
+        "import (\n",
+        "  \"sort\"\n",
+        "  \"sync\"\n",
+        "  \"fmt\"\n",
+        "  \"strings\"\n",
+        "  \"github.com/Open-Science-Global/poly/io/genbank\"\n",
+        "  \"github.com/Open-Science-Global/poly/io/gff\"\n",
+        "  \"github.com/Open-Science-Global/poly/transform/codon\"\n",
+        "  \"github.com/Open-Science-Global/poly/synthesis\"\n",
+        ")\n",
+        "\n",
+        "func IsEqual(a1 []string, a2 []string) bool {\n",
+        "   sort.Strings(a1)\n",
+        "   sort.Strings(a2)\n",
+        "   if len(a1) == len(a2){\n",
+        "      for i, v := range a1 {\n",
+        "         if (v != a2[i]){\n",
+        "            return false\n",
+        "         }\n",
+        "      }\n",
+        "   } else {\n",
+        "      return false\n",
+        "   }\n",
+        "   return true\n",
+        "}\n",
+        "\n",
+        "func getKeys(stringMap map[string]bool) []string {\n",
+        "  var keys []string\n",
+        "  for k, v := range stringMap {\n",
+        "\t  keys = append(keys, k)\n",
+        "  }\n",
+        "  return keys\n",
+        "}"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "SyntaxError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;36m  File \u001b[0;32m\"<ipython-input-1-161c48d9969b>\"\u001b[0;36m, line \u001b[0;32m1\u001b[0m\n\u001b[0;31m    import (\u001b[0m\n\u001b[0m           ^\u001b[0m\n\u001b[0;31mSyntaxError\u001b[0m\u001b[0;31m:\u001b[0m invalid syntax\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "C9jKLLJ7WQZy"
+      },
+      "source": [
+        "## Feature"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "1svMmK0CmtUQ"
+      },
+      "source": [
+        "The first thing that I think we could develop is a function that receives a *sequence* and a *k size* and return a map structure, where the key is the k-mer and the value is true. This map structure in golang could be easy related to a set strucutre in python, making easy for the user to doesn't have any repetited k-mer.\n",
+        "\n",
+        "**[You could see more about the use of the map structure in golang as substitute of the set structure.](https://stackoverflow.com/questions/34018908/golang-why-dont-we-have-a-set-datastructure)** "
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "LV4aQud6KuvI",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 134
+        },
+        "outputId": "bb46a9b6-2165-4ce6-8628-980da9bdafbd"
+      },
+      "source": [
+        "// Feature\n",
+        "\n",
+        "func getKmerTable(k int, sequence string) map[string]bool {\n",
+        "  kmers := make(map[string]bool)\n",
+        "  for i := 0; i <= len(sequence)-k; i++ {\n",
+        "\t\t\tkmers[strings.ToUpper(sequence[i:i+k])] = true\n",
+        "  }\n",
+        "\n",
+        "  return kmers\n",
+        "}"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "SyntaxError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;36m  File \u001b[0;32m\"<ipython-input-2-45243edc3880>\"\u001b[0;36m, line \u001b[0;32m1\u001b[0m\n\u001b[0;31m    (/, Feature)\u001b[0m\n\u001b[0m     ^\u001b[0m\n\u001b[0;31mSyntaxError\u001b[0m\u001b[0;31m:\u001b[0m invalid syntax\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9Aqcx0VpoHl1"
+      },
+      "source": [
+        "Perfect! Now that we could generate a set of all unique k-mers of some sequence, we will create a function that should receive a maximum shared repeat length (you could understand this a k-mer size) and a set of all unique k-mers and try to find repetitions in the sequence that should be found in our target sequence (e.g. genome).\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "cfvPJQvGWGI4",
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 134
+        },
+        "outputId": "e7dbd669-97e5-49c2-ee73-c10c66077f67"
+      },
+      "source": [
+        "func GlobalRemoveRepeat(repeatLen int, globalKmers map[string]bool) func(string, chan synthesis.DnaSuggestion, *sync.WaitGroup) {\n",
+        "\treturn func(sequence string, c chan synthesis.DnaSuggestion, wg *sync.WaitGroup) {\n",
+        "\t\tfor i := 0; i < len(sequence)-repeatLen; i++ {\n",
+        "\t\t\t_, globalRepeat := globalKmers[sequence[i:i+repeatLen]]\n",
+        "      if globalRepeat {\n",
+        "        position := i / 3\n",
+        "\t\t\t\tleftover := i % 3\n",
+        "\t\t\t\tswitch {\n",
+        "\t\t\t\tcase leftover == 0:\n",
+        "\t\t\t\t\tc <- synthesis.DnaSuggestion{position, ((i + repeatLen) / 3), \"NA\", 1, \"Remove repeat\", 0, 0}\n",
+        "\t\t\t\tcase leftover != 0:\n",
+        "\t\t\t\t\tc <- synthesis.DnaSuggestion{position, ((i + repeatLen) / 3) - 1, \"NA\", 1, \"Remove repeat\", 0, 0}\n",
+        "\t\t\t\t}\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "    wg.Done()\n",
+        "\t}\n",
+        "}"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "SyntaxError",
+          "evalue": "ignored",
+          "traceback": [
+            "\u001b[0;36m  File \u001b[0;32m\"<ipython-input-3-e1a5f37e2cf4>\"\u001b[0;36m, line \u001b[0;32m1\u001b[0m\n\u001b[0;31m    func GlobalRemoveRepeat(repeatLen int, globalKmers map[string]bool) func(string, chan synthesis.DnaSuggestion, *sync.WaitGroup) {\u001b[0m\n\u001b[0m                          ^\u001b[0m\n\u001b[0;31mSyntaxError\u001b[0m\u001b[0;31m:\u001b[0m invalid syntax\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "-Kdn0G_wWM3E"
+      },
+      "source": [
+        "## Testing"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "LzfA62qf0KmE"
+      },
+      "source": [
+        "First thing is try to check if the `getKmerTable` function is actually working properly, so I created some support functions to test more easily (You could see this function in the first section of *Implementation*). \n",
+        "\n",
+        "Obs: If you don't see any print, so is corretly working."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "id": "3PvFubwz4b5t"
+      },
+      "source": [
+        "// Unit testing\n",
+        "kmers := getKmerTable(3, \"ATCGA\")\n",
+        "\n",
+        "if !IsEqual(getKeys(kmers), []string{\"ATC\", \"TCG\", \"CGA\"}) {\n",
+        "  fmt.Println(\"TC#1: kmerGenerator return incorrect things\", getKeys(kmers))\n",
+        "}\n",
+        "\n",
+        "kmers := getKmerTable(3, \"AATTCCGG\")\n",
+        "\n",
+        "if !IsEqual(getKeys(kmers), []string{\"AAT\", \"ATT\", \"TTC\", \"TCC\", \"CCG\", \"CGG\"}) {\n",
+        "  fmt.Println(\"TC#2: kmerGenerator return incorrect things\", getKeys(kmers))\n",
+        "}"
+      ],
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "9IMQQFjhrGoG"
+      },
+      "source": [
+        "The second test will be using the already created RemoveRepeat function. In the Hossain and Salis paper they said that repetitions are also a problem when trying to synthesize a sequence. \n",
+        "\n",
+        "> DNA assembly is also sensitive to repetitive sequences: a 20-bp repeat lowers the first-pass success rate to 40% whereas DNA fragments with a 11-bp repeat can be readily synthesized.\n",
+        "\n",
+        "We could use this as information to search for 10-bp internal repetitions in case that we send this part to be synthesize by IDT, Twist or other companies. We will use the subtilis genome (present in the our files as subtilis_genome.gbff file) to make codon optimization only. The fixCds function will try to resolve two problems, the first one is eliminate 10-bp repetitions and the second make good codon optimization."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "_W5W2X4nesdt",
+        "outputId": "e8d0d5c3-770b-4718-d3e8-33be4c260bf2"
+      },
+      "source": [
+        "cds := \"ATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTATTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA\"\n",
+        "subtilis_genome := genbank.Read(\"./subtilis-genome.gbff\")\n",
+        "codonTable := codon.GetCodonTable(11)\n",
+        "codingRegions := codon.GetCodingRegions(subtilis_genome)\n",
+        "optimizationTable := codonTable.OptimizeTable(codingRegions)\n",
+        "\n",
+        "var functions []func(string, chan synthesis.DnaSuggestion, *sync.WaitGroup)\n",
+        "\n",
+        "functions = append(functions, synthesis.RemoveRepeat(10))\n",
+        "fixedSeq, _ := synthesis.FixCds(\":memory:\", cds, optimizationTable, functions)\n",
+        "fixedSeq\n",
+        "\n"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "ATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTATTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 6
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "KADQqbCPt949"
+      },
+      "source": [
+        "In the Hossain and Salis paper we discussed showed that they remove genome 15-bp repetitions in their sequences in one of the experiments.\n",
+        "\n",
+        "> A set of 13 unique sequence constraints were used along with the s288c 2017 genome assembly as background via an 𝐿max of 15 bp.  **Peeters, B.P.H., de Boer, J.H., Bron, S. et al. Supplementary information. Structural plasmid instability in Bacillus subtilis: Effect of direct and inverted repeats. Mol Gen Genet 212, 450–458 (1988). https://doi.org/10.1007/BF00330849**\n",
+        "\n",
+        "Now we will use our new function to make fixCds make codon optimization and remove 15-bp repeats that will be found in genome."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "vMrkHy9xvj4_",
+        "outputId": "6be164e7-2558-4801-dd8c-47ff2419823c"
+      },
+      "source": [
+        "cds := \"ATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTATTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA\"\n",
+        "subtilis_genome := genbank.Read(\"./subtilis-genome.gbff\")\n",
+        "\n",
+        "kmerTable := getKmerTable(15, subtilis_genome.Sequence)\n",
+        "codonTable := codon.GetCodonTable(11)\n",
+        "codingRegions := codon.GetCodingRegions(subtilis_genome)\n",
+        "optimizationTable := codonTable.OptimizeTable(codingRegions)\n",
+        "\n",
+        "var functions []func(string, chan synthesis.DnaSuggestion, *sync.WaitGroup)\n",
+        "functions = append(functions, GlobalRemoveRepeat(15, kmerTable))\n",
+        "\n",
+        "fixedSeq, _ := synthesis.FixCds(\":memory:\", cds, optimizationTable, functions)\n",
+        "fixedSeq"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "ATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTATTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 8
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "Kxok8JMb1ALP"
+      },
+      "source": [
+        "What do you think about trying to remove 15-bp genomic repeats and 10-bp internal repeats anb codon optimization?"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "t3T6mIUS1udL",
+        "outputId": "019d8c03-175c-47d2-f741-7106903bf47d"
+      },
+      "source": [
+        "cds := \"ATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTATTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA\"\n",
+        "subtilis_genome := genbank.Read(\"./subtilis-genome.gbff\")\n",
+        "\n",
+        "kmerTable := getKmerTable(15, subtilis_genome.Sequence)\n",
+        "codonTable := codon.GetCodonTable(11)\n",
+        "codingRegions := codon.GetCodingRegions(subtilis_genome)\n",
+        "optimizationTable := codonTable.OptimizeTable(codingRegions)\n",
+        "\n",
+        "var functions []func(string, chan synthesis.DnaSuggestion, *sync.WaitGroup)\n",
+        "functions = append(functions, GlobalRemoveRepeat(15, kmerTable))\n",
+        "functions = append(functions, synthesis.RemoveRepeat(10))\n",
+        "\n",
+        "fixedSeq, _ := synthesis.FixCds(\":memory:\", cds, optimizationTable, functions)\n",
+        "fixedSeq"
+      ],
+      "execution_count": null,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "ATGAGTATTCAACATTTCCGTGTCGCCCTTATTCCCTTTTTTGCGGCATTTTGCCTTCCTGTTTTTGCTCACCCAGAAACGCTGGTGAAAGTAAAAGATGCTGAAGATCAGTTGGGTGCACGAGTGGGTTACATCGAACTGGATCTCAACAGCGGTAAGATCCTTGAGAGTTTTCGCCCCGAAGAACGTTTTCCAATGATGAGCACTTTTAAAGTTCTGCTATGTGGCGCGGTATTATCCCGTATTGACGCCGGGCAAGAGCAACTCGGTCGCCGCATACACTATTCTCAGAATGACTTGGTTGAGTACTCACCAGTCACAGAAAAGCATCTTACGGATGGCATGACAGTAAGAGAATTATGCAGTGCTGCCATAACCATGAGTGATAACACTGCGGCCAACTTACTTCTGACAACGATCGGAGGACCGAAGGAGCTAACCGCTTTTTTGCACAACATGGGGGATCATGTAACTCGCCTTGATCGTTGGGAACCGGAGCTGAATGAAGCCATACCAAACGACGAGCGTGACACCACGATGCCTGTAGCAATGGCAACAACGTTGCGCAAACTATTAACTGGCGAACTACTTACTCTAGCTTCCCGGCAACAATTAATAGACTGGATGGAGGCGGATAAAGTTGCAGGACCACTTCTGCGCTCGGCCCTTCCGGCTGGCTGGTTTATTGCTGATAAATCTGGAGCCGGTGAGCGTGGGTCTCGCGGTATCATTGCAGCACTGGGGCCAGATGGTAAGCCCTCCCGTATCGTAGTTATCTACACGACGGGGAGTCAGGCAACTATGGATGAACGAAATAGACAGATCGCTGAGATAGGTGCCTCACTGATTAAGCATTGGTAA"
+            ]
+          },
+          "metadata": {
+            "tags": []
+          },
+          "execution_count": 14
+        }
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {
+        "id": "nV3mlWpN16G5"
+      },
+      "source": [
+        "Looks nice, right? Hey, now that we have this explanations and that the feature was build in front of your eyes, what do you think about making a code review? This will be avalible in the Pull Request tab of project and you could take a look of this modifications make some questions, show that I'm wrong about something, or asking for more code comments.\n",
+        "\n",
+        "**Until next feature!**"
+      ]
+    }
+  ]
+}
