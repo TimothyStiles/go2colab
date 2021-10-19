@@ -9,19 +9,19 @@ So I'm writing this program that rips an entire project's example tests that inc
 Is this a dirty hack to get runnable IO examples? Maybe, but I'll be danged if I need to maintain tutorials on top of my libraries.
 
 ### Spec
-Given a go package repo url go2colab will:
+Given a `Go` package repo url `go2colab` will:
 
-- [ ] Store the URL
-- [ ] Extract and store the and store repo, owner, branch/commit, and host's names from the url
-- [ ] if the branch/commit isn't supplied default to commit associated latest release tag
+- [ ] Store the `Url`
+- [ ] Extract and store the and store `Repo`, `Owner`, `Branch/Commit`, and `Host`'s names from the `Url`
+- [ ] if the `Branch/Commit` isn't supplied default to commit associated latest release tag
 - [ ] Clone the git repo into a temporary directory
-- [ ] If no branch/commit is supplied extract the latest release tag from repo with its associated commit.
-- [ ] Parse go.mod for Go version
-- [ ] Find every example_test file path in the repo and its subpackages and store those in `Repo.Paths`
-- [ ] Iterate through example paths and extract every example test with the word "tutorial" in its definition and parse it into a Tutorial struct.
-- [ ] For each tutorial:
-  - [ ] Initalize a notebook struct with required metadata. (an [autorunning notebook cell](https://coding-stream-of-consciousness.com/2018/11/13/jupyter-auto-run-cells-on-load/) that sets up the go kernel and env)
-  - [ ] Add code cell for tutorial
+- [ ] If no `Branch/Commit` is supplied extract the latest release tag from repo with its associated commit.
+- [ ] Parse `go.mod` for `Go` version
+- [ ] Find every `example_test.go` file path in the repo and its subpackages and store those in `Repo.Paths`
+- [ ] Iterate through example paths and extract every example test with the word "tutorial" in its definition and parse it into a `Tutorial` struct.
+- [ ] For each `Tutorial`:
+  - [ ] Initalize a `Notebook` struct with required metadata. (an [autorunning notebook cell](https://coding-stream-of-consciousness.com/2018/11/13/jupyter-auto-run-cells-on-load/) that sets up the go kernel and env)
+  - [ ] Convert `Tutorial.Source` to a `Notebook.Cell` and append it to `Notebook.Cells`
   - [ ] If flag - Write the notebook to a file in same directory as source example test
   - [ ] If flag - Push the notebook to colab
   - [ ] If flag - Update godocs with the tutorial's url
