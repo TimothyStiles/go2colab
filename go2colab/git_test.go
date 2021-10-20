@@ -1,7 +1,6 @@
 package go2colab
 
 import (
-	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -10,7 +9,7 @@ import (
 func TestCloneRepo(t *testing.T) {
 	testUrl := "https://github.com/TimothyStiles/poly/"
 	// create a temporary directory
-	tmpDataDir, err := ioutil.TempDir("./data", "repo-*")
+	tmpDataDir, err := ioutil.TempDir("../quarantine", "repo-*")
 
 	if err != nil {
 		t.Errorf("Error creating temporary directory: %s", err)
@@ -28,8 +27,4 @@ func TestCloneRepo(t *testing.T) {
 	if tagged == false {
 		t.Errorf("Error: v0.15.0 tag does not exist")
 	}
-
-	taglist := getSortedListOfTags(repo)
-	fmt.Println(taglist)
-
 }

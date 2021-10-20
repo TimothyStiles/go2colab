@@ -11,7 +11,7 @@ type Repo struct {
 	UseLatestReleaseTag bool     `json:"use_latest_release_tag"`
 	ReleaseTag          TagInfo  `json:"release_tag"`
 	TutorialPaths       []string `json:"tutorial_paths"`
-	Head                Commit   `json:"head"`
+	Head                string   `json:"head"`
 }
 
 type Tutorial struct {

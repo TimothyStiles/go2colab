@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing"
 )
 
 func cloneRepo(url string, path string) (*git.Repository, error) {
@@ -54,6 +55,7 @@ func getSortedListOfTags(r *git.Repository) []TagInfo {
 		tagInfo.Name = tag.Name
 		tagInfo.Message = tag.Message
 		tagInfo.Hash = tag.Hash.String()
+		tagInfo.CommitHash = tag.Target.String()
 		tagsList = append(tagsList, tagInfo)
 	}
 	sortedTagsList := sortTagsByDate(tagsList)
@@ -68,8 +70,28 @@ func sortTagsByDate(tags []TagInfo) []TagInfo {
 }
 
 type TagInfo struct {
-	Name    string
-	Date    time.Time
-	Hash    string
-	Message string
+	Name       string
+	Date       time.Time
+	Hash       string
+	CommitHash string
+	Message    string
+}
+
+func checkoutCommit(r *git.Repository, commitHash string) error {
+	plumbHash := plumbing.NewHash(commitHash)
+	commit, err := r.CommitObject(plumbHash)
+	if err != nil {
+		return err
+	}
+	workTree, err := r.Worktree()
+	if err != nil {
+		return err
+	}
+	err = workTree.Checkout(&git.CheckoutOptions{
+		Hash: commit.Hash,
+	})
+	if err != nil {
+		return err
+	}
+	return nil
 }

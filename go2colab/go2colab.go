@@ -10,7 +10,7 @@ import (
 
 func Go2Colab(urlString string) error {
 	var repo Repo
-	tmpDataDir, err := ioutil.TempDir("./data", "repo-*")
+	tmpDataDir, err := ioutil.TempDir("../quarantine", "repo-*")
 	if err != nil {
 		return err
 	}
@@ -31,8 +31,13 @@ func Go2Colab(urlString string) error {
 
 	if repo.UseLatestReleaseTag {
 		repo.ReleaseTag = getSortedListOfTags(gitRepo)[0]
+		repo.Head = repo.ReleaseTag.CommitHash
 	}
 
+	err = checkoutCommit(gitRepo, repo.Head)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -75,7 +80,7 @@ func getRepoUrlMeta(repo Repo) (Repo, error) {
 
 	// Get the repo's commit hash
 	if pathLength > 3 {
-		repo.Head.Hash = string(repoPath[3])
+		repo.Head = string(repoPath[3])
 	} else {
 		repo.UseLatestReleaseTag = true
 	}
