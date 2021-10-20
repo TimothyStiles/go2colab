@@ -11,11 +11,11 @@ Is this a dirty hack to get runnable IO examples? Maybe, but I'll be danged if I
 ### Spec
 Given a `Go` package repo url `go2colab` will:
 
-- [ ] Store the `Url`
-- [ ] Extract and store the and store `Repo`, `Owner`, `Branch/Commit`, and `Host`'s names from the `Url`
-- [ ] if the `Branch/Commit` isn't supplied default to commit associated latest release tag
-- [ ] Clone the git repo into a temporary directory
-- [ ] If no `Branch/Commit` is supplied extract the latest release tag from repo with its associated commit.
+- [x] Store the `Url`
+- [x] Extract and store the and store `Repo`, `Owner`, `Branch/Commit`, and `Host`'s names from the `Url`
+- [x] if the `Branch/Commit` isn't supplied default to commit associated latest release tag
+- [x] Clone the git repo into a temporary directory
+- [x] If no `Branch/Commit` is supplied extract the latest release tag from repo with its associated commit.
 - [ ] Parse `go.mod` for `Go` version
 - [ ] Find every `example_test.go` file path in the repo and its subpackages and store those in `Repo.Paths`
 - [ ] Iterate through example paths and extract every example test with the word "tutorial" in its definition and parse it into a `Tutorial` struct.
