@@ -1,9 +1,12 @@
 package go2colab
 
 import (
+	"errors"
 	"fmt"
+	"net/url"
 	"os"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/go-git/go-git/v5"
@@ -94,4 +97,50 @@ func checkoutCommit(r *git.Repository, commitHash string) error {
 		return err
 	}
 	return nil
+}
+
+func getRepoUrlMeta(repo Repo) (Repo, error) {
+	var ErrInvalidURL error = errors.New("invalid URL")
+
+	// Parse the url
+	urlStruct, err := url.Parse(repo.Url)
+
+	// Check for errors
+	if err != nil {
+		return repo, err
+	}
+	// Check if the url is valid
+	if !urlStruct.IsAbs() {
+		return repo, ErrInvalidURL
+	}
+
+	// Get the repo host
+	repo.Host = urlStruct.Host
+
+	// Get the repo's url path
+	repoPathString := urlStruct.Path
+
+	// split the path into an array
+	repoPathStringTrimmed := strings.Trim(repoPathString, "/")
+	repoPath := strings.Split(repoPathStringTrimmed, "/")
+
+	// check if the repo path is long enough
+	pathLength := len(repoPath)
+	if pathLength < 2 {
+		return repo, ErrInvalidURL
+	}
+
+	// Get the repo owner
+	repo.Owner = string(repoPath[0])
+
+	// Get the repo name
+	repo.Name = string(repoPath[1])
+
+	// Get the repo's commit hash
+	if pathLength > 3 {
+		repo.Head = string(repoPath[3])
+	} else {
+		repo.UseLatestReleaseTag = true
+	}
+	return repo, nil
 }
