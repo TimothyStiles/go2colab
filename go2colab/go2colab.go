@@ -5,6 +5,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/go-git/go-billy/v5"
 	"github.com/go-git/go-git/v5"
 )
 
@@ -60,9 +61,17 @@ func Go2Colab(urlString string) error {
 	if err != nil {
 		return err
 	}
-	// for each result get file name and retrieve whole file content
-	// for _, result := range grepResults {
-	// }
+
+	var examples []billy.File
+	for _, result := range grepResults {
+		if strings.Contains(result.FileName, "example") {
+			file, err := tree.Filesystem.Open(result.FileName)
+			if err != nil {
+				return err
+			}
+			examples = append(examples, file)
+		}
+	}
 	return nil
 }
 
