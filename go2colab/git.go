@@ -2,21 +2,22 @@ package go2colab
 
 import (
 	"errors"
-	"fmt"
 	"net/url"
-	"os"
 	"sort"
 	"strings"
 	"time"
 
+	"github.com/go-git/go-billy/v5/memfs"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
+	"github.com/go-git/go-git/v5/storage/memory"
 )
 
-func cloneRepo(url string, path string) (*git.Repository, error) {
-	openRepo, err := git.PlainClone(path, false, &git.CloneOptions{
-		URL:      url,
-		Progress: os.Stdout,
+func cloneRepoMemory(url string) (*git.Repository, error) {
+	fs := memfs.New()
+	memoryStore := memory.NewStorage()
+	openRepo, err := git.Clone(memoryStore, fs, &git.CloneOptions{
+		URL: url,
 	})
 
 	return openRepo, err
@@ -33,7 +34,6 @@ func tagExists(tag string, r *git.Repository) bool {
 		if err != nil {
 			break
 		}
-		fmt.Println(t.Name)
 		if t.Name == tag {
 			return true
 		}

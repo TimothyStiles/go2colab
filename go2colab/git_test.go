@@ -1,23 +1,13 @@
 package go2colab
 
 import (
-	"io/ioutil"
-	"os"
 	"testing"
 )
 
-func TestCloneRepo(t *testing.T) {
+func TestCloneRepoMemory(t *testing.T) {
 	testUrl := "https://github.com/TimothyStiles/poly/"
-	// create a temporary directory
-	tmpDataDir, err := ioutil.TempDir("../quarantine", "repo-*")
 
-	if err != nil {
-		t.Errorf("Error creating temporary directory: %s", err)
-	}
-	defer os.RemoveAll(tmpDataDir)
-	//create directory
-
-	repo, err := cloneRepo(testUrl, tmpDataDir)
+	repo, err := cloneRepoMemory(testUrl)
 	if err != nil {
 		t.Errorf("Error cloning repo: %s", err)
 	}

@@ -3,7 +3,7 @@ package go2colab
 import "testing"
 
 func TestGo2Colab(t *testing.T) {
-	testUrl := "https://github.com/TimothyStiles/poly/"
+	testUrl := "https://github.com/TimothyStiles/poly.git"
 
 	// Test the go2colab function
 	err := Go2Colab(testUrl)
