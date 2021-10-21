@@ -1,10 +1,11 @@
 package go2colab
 
 import (
+	"io/ioutil"
 	"regexp"
 	"strings"
 
-	"github.com/go-git/go-billy/v5"
+	"github.com/go-git/go-git/v5"
 )
 
 func Go2Colab(urlString string) error {
@@ -45,6 +46,7 @@ func Go2Colab(urlString string) error {
 		return err
 	}
 
+	// iterate over grep results and get the version when we find the first match for go.mod
 	for _, result := range grepResults {
 		if result.FileName == "go.mod" {
 			version := strings.Split(result.Content, " ")[1]
@@ -60,15 +62,38 @@ func Go2Colab(urlString string) error {
 		return err
 	}
 
-	var examples []billy.File
+	//  iterate over example files, check filename, and store them as billy.File slice
+	var notebooks []Notebook
 	for _, result := range grepResults {
 		if strings.Contains(result.FileName, "example") {
-			file, err := tree.Filesystem.Open(result.FileName)
+			notebook, err := grep2Notebook(tree, result)
 			if err != nil {
 				return err
 			}
-			examples = append(examples, file)
+			notebooks = append(notebooks, notebook)
 		}
 	}
+
 	return nil
+}
+
+func grep2Notebook(tree *git.Worktree, grepResult git.GrepResult) (Notebook, error) {
+	var notebook Notebook
+	var sourceCell Cell
+	sourceCell.CellType = "code"
+	src, err := tree.Filesystem.Open(grepResult.FileName)
+	if err != nil {
+		return notebook, err
+	}
+	defer src.Close()
+
+	srcBytes, err := ioutil.ReadAll(src)
+	if err != nil {
+		return notebook, err
+	}
+	srcString := string(srcBytes)
+	sourceCell.Source = srcString
+	notebook.Cells = append(notebook.Cells, sourceCell)
+	notebook.RepoPath = grepResult.FileName
+	return notebook, nil
 }

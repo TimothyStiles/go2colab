@@ -6,6 +6,7 @@ type Notebook struct {
 	Nbformat      int      `json:"nbformat"`
 	NbformatMinor int      `json:"nbformat_minor"`
 	Cells         []Cell   `json:"cells"`
+	RepoPath      string   `json:"-"`
 }
 
 type Metadata struct {
