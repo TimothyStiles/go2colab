@@ -1,12 +1,10 @@
 package go2colab
 
 import (
-	"fmt"
 	"regexp"
 	"strings"
 
 	"github.com/go-git/go-billy/v5"
-	"github.com/go-git/go-git/v5"
 )
 
 func Go2Colab(urlString string) error {
@@ -73,20 +71,4 @@ func Go2Colab(urlString string) error {
 		}
 	}
 	return nil
-}
-
-func grepWorkTree(worktree *git.Worktree, pattern regexp.Regexp) ([]git.GrepResult, error) {
-	var grepOptions git.GrepOptions
-
-	// create regexp for pattern "*example_test.go"
-	// grepRegexp := regexp.MustCompile("Example_basic")
-
-	grepOptions.Patterns = []*regexp.Regexp{&pattern}
-
-	grepResults, err := worktree.Grep(&grepOptions)
-	if err != nil {
-		return grepResults, err
-	}
-	fmt.Println(grepResults)
-	return grepResults, nil
 }

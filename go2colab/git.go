@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"net/url"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -22,6 +23,21 @@ func cloneRepoMemory(url string) (*git.Repository, error) {
 	})
 
 	return openRepo, err
+}
+
+func grepWorkTree(worktree *git.Worktree, pattern regexp.Regexp) ([]git.GrepResult, error) {
+	var grepOptions git.GrepOptions
+
+	// create regexp for pattern "*example_test.go"
+	// grepRegexp := regexp.MustCompile("Example_basic")
+
+	grepOptions.Patterns = []*regexp.Regexp{&pattern}
+
+	grepResults, err := worktree.Grep(&grepOptions)
+	if err != nil {
+		return grepResults, err
+	}
+	return grepResults, nil
 }
 
 func tagExists(tag string, r *git.Repository) bool {
