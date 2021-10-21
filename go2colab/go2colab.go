@@ -2,6 +2,10 @@ package go2colab
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
+	"github.com/go-git/go-git/v5"
 )
 
 func Go2Colab(urlString string) error {
@@ -34,22 +38,46 @@ func Go2Colab(urlString string) error {
 	if err != nil {
 		return err
 	}
-	root := tree.Filesystem.Root()
-	files, err := tree.Filesystem.ReadDir(root)
+
+	// grep Go Version
+	goVersionRegex := regexp.MustCompile("go [\\d].*")
+	grepResults, err := grepWorkTree(tree, *goVersionRegex)
 	if err != nil {
 		return err
 	}
 
-	var fileNames []string
-	for _, file := range files {
-		fileNames = append(fileNames, file.Name())
+	for _, result := range grepResults {
+		if result.FileName == "go.mod" {
+			version := strings.Split(result.Content, " ")[1]
+			repo.GoVersion = version
+			break
+		}
 	}
 
-	fmt.Println(fileNames)
-	treeStat, err := tree.Status()
+	// grep Tutorial examples
+	tutorialRegex := regexp.MustCompile("Example_basic")
+	grepResults, err = grepWorkTree(tree, *tutorialRegex)
 	if err != nil {
 		return err
 	}
-	fmt.Println(root, treeStat)
+	// for each result get file name and retrieve whole file content
+	// for _, result := range grepResults {
+	// }
 	return nil
+}
+
+func grepWorkTree(worktree *git.Worktree, pattern regexp.Regexp) ([]git.GrepResult, error) {
+	var grepOptions git.GrepOptions
+
+	// create regexp for pattern "*example_test.go"
+	// grepRegexp := regexp.MustCompile("Example_basic")
+
+	grepOptions.Patterns = []*regexp.Regexp{&pattern}
+
+	grepResults, err := worktree.Grep(&grepOptions)
+	if err != nil {
+		return grepResults, err
+	}
+	fmt.Println(grepResults)
+	return grepResults, nil
 }
