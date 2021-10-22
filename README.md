@@ -1,4 +1,4 @@
-# go2collab
+# go2colab
 
 Scientists (my [main project's](https://github.com/TimothyStiles/poly) users) love jupyter notebook tutorials
 
