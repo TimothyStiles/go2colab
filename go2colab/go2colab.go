@@ -55,6 +55,7 @@ func Go2Colab(urlString string) error {
 	return nil
 }
 
+// retrieve repo's go version so we know which to use in Docker builds.
 func getGoVersion(gitRepo *git.Repository) (string, error) {
 	var version string
 	tree, err := gitRepo.Worktree()
