@@ -1,7 +1,11 @@
 package go2colab
 
 import (
+	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 
@@ -62,6 +66,12 @@ func Go2Colab(urlString string) error {
 		return err
 	}
 
+	tmpDataDir, err := ioutil.TempDir(".", "data-*")
+	if err != nil {
+		fmt.Println(err.Error())
+	}
+	defer os.RemoveAll(tmpDataDir)
+
 	//  iterate over example files, check filename, and store them as billy.File slice
 	var notebooks []Notebook
 	for _, result := range grepResults {
@@ -70,6 +80,10 @@ func Go2Colab(urlString string) error {
 			if err != nil {
 				return err
 			}
+			file, _ := json.MarshalIndent(notebook, "", " ")
+			base := filepath.Base(notebook.RepoPath)
+			filename := filepath.Join(tmpDataDir, base)
+			_ = ioutil.WriteFile(filename, file, 0644)
 			notebooks = append(notebooks, notebook)
 		}
 	}
